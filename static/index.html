@@ -1,0 +1,211 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset='utf-8'/>
+<title>CoughGathering</title>
+<style>
+body {
+  text-align: center;
+  font-family: sans-serif;
+  margin: 0;
+  padding: 0;
+}
+.header {
+  background-color: gray;
+  color: white;
+}
+h1 {
+  margin: 0;
+  padding: 1em 0 .5em 0;
+}
+.subtitle {
+  padding: 1em;
+}
+.form {
+  margin: 2em;
+}
+button {
+  background-color: hsl(0, 100%, 60%);
+  width: 15em;
+  height: 15em;
+  border-radius: 7.5em;
+  color: white;
+  font-weight: bold;
+}
+.footer {
+  background-color: white;
+  position: fixed;
+  text-align: center;
+  bottom: 0;
+  width: 100%;
+  padding: .5em 0 0.5em 0;
+  font-size: 80%;
+  color: gray;
+}
+.footer a {
+  color: gray !important;
+}
+</style>
+</head>
+<body>
+<div class=header>
+<h1>CoughGathering</h1>
+<div class=subtitle>send us your sound of cough to beat Coronavirus!</div>
+</div>
+<div class=form>
+  <label><input type=checkbox id=covid19>I have COVID-19.</label>
+</div>
+<button id="btn">push to record<br> and send your cough</button>
+<div class=footer>
+APP: <a href=https://cough.sabae.cc/>CoughGathering</a> CC BY <a href=https://twitter.com/taisukef>@taisukef</a>
+</div>
+
+
+<script>'use strict'
+const TIME_RECORDING = 5 * 1000
+
+let audioContext = null
+let audioStream = null
+
+// audio data
+const audioData = []
+const bufferSize = 1024
+let audio_sample_rate = 0
+
+const stopAudio = async function() {
+  if (!audioContext)
+    return
+  await audioContext.close()
+  audioContext = null
+  audioStream.getTracks().forEach(t => t.stop())
+  audioStream = null
+  btn.innerHTML = btn.bkInnerHTML
+}
+const saveAudio = async function() {
+  download.href = exportWAV()
+  download.download = 'recorded.wav'
+  download.click()
+}
+
+// export WAV from audio float data
+const getBlobWAV = function() {
+  const encodeWAV = function(samples, sampleRate) {
+    const buffer = new ArrayBuffer(44 + samples.length * 2)
+    const view = new DataView(buffer)
+    const writeString = function(view, offset, string) {
+      for (let i = 0; i < string.length; i++) {
+        view.setUint8(offset + i, string.charCodeAt(i));
+      }
+    }
+    const floatTo16BitPCM = function (output, offset, input) {
+      for (let i = 0; i < input.length; i++, offset += 2) {
+        const s = Math.max(-1, Math.min(1, input[i]))
+        output.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true)
+      }
+    }
+    writeString(view, 0, 'RIFF')  // RIFF
+    view.setUint32(4, 32 + samples.length * 2, true) // file size
+    writeString(view, 8, 'WAVE') // WAVE
+    writeString(view, 12, 'fmt ') // fmt chunk
+    view.setUint32(16, 16, true) // size of fmt chknk
+    view.setUint16(20, 1, true) // format ID
+    view.setUint16(22, 1, true) // n channels
+    view.setUint32(24, sampleRate, true) // sampling rate
+    view.setUint32(28, sampleRate * 2, true) // byte per sec
+    view.setUint16(32, 2, true) // size of block
+    view.setUint16(34, 16, true) // bit per sample
+    writeString(view, 36, 'data') // data chunk
+    view.setUint32(40, samples.length * 2, true) // size of wave
+    floatTo16BitPCM(view, 44, samples) // wave data
+    return view
+  }
+  const mergeBuffers = function(audioData) {
+    let sampleLength = 0
+    for (let i = 0; i < audioData.length; i++) {
+      sampleLength += audioData[i].length
+    }
+    const samples = new Float32Array(sampleLength)
+    let sampleIdx = 0
+    for (let i = 0; i < audioData.length; i++) {
+      for (let j = 0; j < audioData[i].length; j++) {
+        samples[sampleIdx++] = audioData[i][j]
+      }
+    }
+    return samples
+  }
+  const dataview = encodeWAV(mergeBuffers(audioData), audio_sample_rate)
+  const audioBlob = new Blob([ dataview ], { type: 'audio/wav' })
+  //console.log(dataview)
+  return audioBlob
+}
+
+//upload.disabled = true
+
+const uploadAudio = async function() {
+  const audioBlob = getBlobWAV()
+  const myURL = window.URL || window.webkitURL
+  const url = myURL.createObjectURL(audioBlob)
+
+  for (;;) {
+    try {
+      const url = '/'
+      const formdata = new FormData()
+      formdata.append("file", audioBlob)
+      formdata.append('covid19', covid19.checked ? 1 : 0)
+      const res = await (await fetch(url, { method: 'POST',body: formdata })).json()
+      console.log(res)
+      if (res.res == 'ok') {
+        break
+      }
+      if (!confirm("upload error, retry? (" + res.res + ")")) {
+        break
+      }
+    } catch (e) {
+      if (!confirm("upload error, retry? (" + e + ")")) {
+        break
+      }
+    }
+  }
+}
+
+btn.onclick = async function() {
+  const caption = 'recording...'
+  if (btn.textContent == caption) {
+    stopAudio()
+    return
+  }
+  btn.bkInnerHTML = btn.innerHTML
+  btn.textContent = caption
+
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+  audioStream = stream
+  window.AudioContext = window.webkitAudioContext || window.AudioContext
+  audioContext = new AudioContext()
+  audio_sample_rate = audioContext.sampleRate // 44100 on Mac
+  const scriptProcessor = audioContext.createScriptProcessor(bufferSize, 1, 1)
+  const mediastreamsource = audioContext.createMediaStreamSource(stream)
+  mediastreamsource.connect(scriptProcessor)
+  scriptProcessor.onaudioprocess = function(e) {
+    const input = e.inputBuffer.getChannelData(0)
+    const bufferData = new Float32Array(bufferSize)
+    for (let i = 0; i < bufferSize; i++) {
+      bufferData[i] = input[i]
+    }
+    audioData.push(bufferData)
+  }
+  scriptProcessor.connect(audioContext.destination)
+
+  setTimeout(async function() {
+    stopAudio()
+    btn.textContent = 'uplading...'
+    await uploadAudio()
+    btn.textContent = 'thank you!!'
+    setTimeout(function() {
+      btn.innerHTML = btn.bkInnerHTML
+    }, 1500)
+  }, TIME_RECORDING)
+}
+</script>
+</body>
+
+</html>
