@@ -44,12 +44,7 @@ app.post('/', multer({ dest: 'tmp/' }).single('file'), (req, res) => {
   res.header('Access-Control-Allow-Origin', '*')
   res.header('Content-Type', 'application/json; charset=utf-8')
   const data = fs.readFileSync(req.file.path)
-  const flg = req.body.covid19
-  if (flg != 0 && flg != 1) {
-    res.send(JSON.stringify({ res: 'no covid19 flg' }))
-    return
-  }
-  //const fn = 'data/' + flg + "/" + util.getYMDHMSM() + "-" + encodeIP(getIP(req)) + ".wav"
+  console.log(req.file.path)
   const id = getID()
   const fn = 'data/' + id + "-" + util.getYMDHMSM() + "-" + encodeIP(getIP(req)) + ".wav"
   util.writeFileSync(fn, data)
