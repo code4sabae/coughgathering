@@ -28,6 +28,18 @@ const encodeIP = function(ip) {
   return ip.replace(/\.|:/g, '_')
 }
 
+const fnid = 'data/id.txt'
+const getID = function() {
+  let id = 0
+  try {
+    id = parseInt(fs.readFileSync(fnid, 'utf-8'))
+  } catch (e) {
+  }
+  id++
+  fs.writeFileSync(fnid, id, 'utf-8')
+  return id
+}
+
 app.post('/', multer({ dest: 'tmp/' }).single('file'), (req, res) => {
   res.header('Access-Control-Allow-Origin', '*')
   res.header('Content-Type', 'application/json; charset=utf-8')
@@ -37,10 +49,12 @@ app.post('/', multer({ dest: 'tmp/' }).single('file'), (req, res) => {
     res.send(JSON.stringify({ res: 'no covid19 flg' }))
     return
   }
-  const fn = 'data/' + flg + "/" + util.getYMDHMSM() + "-" + encodeIP(getIP(req)) + ".wav"
+  //const fn = 'data/' + flg + "/" + util.getYMDHMSM() + "-" + encodeIP(getIP(req)) + ".wav"
+  const id = getID()
+  const fn = 'data/' + id + "-" + util.getYMDHMSM() + "-" + encodeIP(getIP(req)) + ".wav"
   util.writeFileSync(fn, data)
   console.log('uploaded: ' + fn)
-  res.send(JSON.stringify({ res: 'ok' }))
+  res.send(JSON.stringify({ res: 'ok', id: id }))
 })
 app.get(SECPATH + '*', (req, res) => {
   let fn = req.url.substring(SECPATH.length)
@@ -77,9 +91,24 @@ app.get(SECPATH + '*', (req, res) => {
     res.send(data)
   }
 })
-app.get('/', (req, res) => {
-  res.header('Content-Type', 'text/html; charset=utf-8')
-  res.send(fs.readFileSync('static/index.html'))
+app.get('/*', (req, res) => {
+  let url = req.url
+  if (url == '/' || url.indexOf('..') >= 0) {
+    url = '/index.html'
+  }
+  let ctype = 'text/plain'
+  if (url.endsWith('.html')) {
+    ctype = 'text/html; charset=utf-8'
+  } else if (url.endsWith('.js')) {
+    ctype = 'text/javascript'
+  }
+  let data = null
+  try {
+    data = fs.readFileSync('static' + url)
+  } catch (e) {
+  }
+  res.header('Content-Type', ctype)
+  res.send(data)
 })
 
 app.listen(PORT, () => {

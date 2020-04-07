@@ -21,16 +21,19 @@ h1 {
 .subtitle {
   padding: 1em;
 }
-.form {
-  margin: 2em;
+.desc {
+  margin: 1em;
 }
 button {
   background-color: hsl(0, 100%, 60%);
+  border-color: hsl(0, 100%, 60%);
+  color: white;
+  font-weight: bold;
+  font-size: 110%;
   width: 15em;
   height: 15em;
   border-radius: 7.5em;
-  color: white;
-  font-weight: bold;
+  margin: 2em;
 }
 .footer {
   background-color: white;
@@ -48,164 +51,65 @@ button {
 </style>
 </head>
 <body>
+<div id='contents'>
 <div class=header>
-<h1>CoughGathering</h1>
-<div class=subtitle>send us your sound of cough to beat Coronavirus!</div>
+<h1>Virufy COVID-19 Early Detection</h1>
+<div class=subtitle>Please take a few minutes to send us your cough sounds to help beat Coronavirus!</div>
 </div>
-<div class=form>
-  <label><input type=checkbox id=covid19>I have COVID-19.</label>
+<button id="btn">STRAT to record</button>
+<div class=desc>
+  Please place your smartphone near the patient's mouth such that there is minimal background noise.
 </div>
-<button id="btn">push to record<br> and send your cough</button>
 <div class=footer>
-APP: <a href=https://cough.sabae.cc/>CoughGathering</a> CC BY <a href=https://twitter.com/taisukef>@taisukef</a>
+APP: <a href=https://cough.sabae.cc/>Virufy COVID-19 Early Detection</a> CC BY <a href=https://twitter.com/taisukef>@taisukef</a> / <a href=https://www.zenit.jp/team>Amil Khanzada</a>
+</div>
 </div>
 
-
+<script src='virufy.js'></script>
 <script>'use strict'
-const TIME_RECORDING = 5 * 1000
 
-let audioContext = null
-let audioStream = null
+const URL_FORM = 'https://docs.google.com/forms/d/e/1FAIpQLSeSspXKpv1fcEGcQhyPbZAXjBFF3b_8dVICbQDY1VGiNHLCIQ/viewform?entry.287747128='
 
-// audio data
-const audioData = []
-const bufferSize = 1024
-let audio_sample_rate = 0
+window.onload = async function() {
+  await waitButtonPressed()
+  show("Let's start to record!")
+  await sleep(1.5)
+  show("Take a few deep breaths")
+  await sleep(5.0)
 
-const stopAudio = async function() {
-  if (!audioContext)
-    return
-  await audioContext.close()
-  audioContext = null
-  audioStream.getTracks().forEach(t => t.stop())
-  audioStream = null
-  btn.innerHTML = btn.bkInnerHTML
-}
-const saveAudio = async function() {
-  download.href = exportWAV()
-  download.download = 'recorded.wav'
-  download.click()
-}
-
-// export WAV from audio float data
-const getBlobWAV = function() {
-  const encodeWAV = function(samples, sampleRate) {
-    const buffer = new ArrayBuffer(44 + samples.length * 2)
-    const view = new DataView(buffer)
-    const writeString = function(view, offset, string) {
-      for (let i = 0; i < string.length; i++) {
-        view.setUint8(offset + i, string.charCodeAt(i));
-      }
+  const data = [
+    { caption: 'Breathe naturally', sec: 30, record: true },
+    { caption: 'Cough continuously', sec: 20, record: true },
+    { caption: 'Take a break', sec: 30, record: false },
+    { caption: 'Cough continuously', sec: 20, record: true },
+  ]
+  await startAudio()
+  for (let j = 0; j < data.length; j++) {
+    const d = data[j]
+    if (d.record) {
+      console.log('rec')
     }
-    const floatTo16BitPCM = function (output, offset, input) {
-      for (let i = 0; i < input.length; i++, offset += 2) {
-        const s = Math.max(-1, Math.min(1, input[i]))
-        output.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true)
-      }
+    for (let i = d.sec; i >= 0; i--) {
+      show(`${d.caption} for ${d.sec} seconds<br>${i}`)
+      await sleep(1)
     }
-    writeString(view, 0, 'RIFF')  // RIFF
-    view.setUint32(4, 32 + samples.length * 2, true) // file size
-    writeString(view, 8, 'WAVE') // WAVE
-    writeString(view, 12, 'fmt ') // fmt chunk
-    view.setUint32(16, 16, true) // size of fmt chknk
-    view.setUint16(20, 1, true) // format ID
-    view.setUint16(22, 1, true) // n channels
-    view.setUint32(24, sampleRate, true) // sampling rate
-    view.setUint32(28, sampleRate * 2, true) // byte per sec
-    view.setUint16(32, 2, true) // size of block
-    view.setUint16(34, 16, true) // bit per sample
-    writeString(view, 36, 'data') // data chunk
-    view.setUint32(40, samples.length * 2, true) // size of wave
-    floatTo16BitPCM(view, 44, samples) // wave data
-    return view
+    if (d.record) {
+      console.log('rec stop')
+    }
+    if (j < data.length - 1) {
+      show('Good!')
+    } else {
+      show('Thank you!')
+    }
+    await sleep(1)
   }
-  const mergeBuffers = function(audioData) {
-    let sampleLength = 0
-    for (let i = 0; i < audioData.length; i++) {
-      sampleLength += audioData[i].length
-    }
-    const samples = new Float32Array(sampleLength)
-    let sampleIdx = 0
-    for (let i = 0; i < audioData.length; i++) {
-      for (let j = 0; j < audioData[i].length; j++) {
-        samples[sampleIdx++] = audioData[i][j]
-      }
-    }
-    return samples
-  }
-  const dataview = encodeWAV(mergeBuffers(audioData), audio_sample_rate)
-  const audioBlob = new Blob([ dataview ], { type: 'audio/wav' })
-  //console.log(dataview)
-  return audioBlob
-}
-
-//upload.disabled = true
-
-const uploadAudio = async function() {
-  const audioBlob = getBlobWAV()
-  const myURL = window.URL || window.webkitURL
-  const url = myURL.createObjectURL(audioBlob)
-
-  for (;;) {
-    try {
-      const url = '/'
-      const formdata = new FormData()
-      formdata.append("file", audioBlob)
-      formdata.append('covid19', covid19.checked ? 1 : 0)
-      const res = await (await fetch(url, { method: 'POST',body: formdata })).json()
-      console.log(res)
-      if (res.res == 'ok') {
-        break
-      }
-      if (!confirm("upload error, retry? (" + res.res + ")")) {
-        break
-      }
-    } catch (e) {
-      if (!confirm("upload error, retry? (" + e + ")")) {
-        break
-      }
-    }
-  }
-}
-
-btn.onclick = async function() {
-  const caption = 'recording...'
-  if (btn.textContent == caption) {
-    stopAudio()
-    return
-  }
-  btn.bkInnerHTML = btn.innerHTML
-  btn.textContent = caption
-
-  const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-  audioStream = stream
-  window.AudioContext = window.webkitAudioContext || window.AudioContext
-  audioContext = new AudioContext()
-  audio_sample_rate = audioContext.sampleRate // 44100 on Mac
-  const scriptProcessor = audioContext.createScriptProcessor(bufferSize, 1, 1)
-  const mediastreamsource = audioContext.createMediaStreamSource(stream)
-  mediastreamsource.connect(scriptProcessor)
-  scriptProcessor.onaudioprocess = function(e) {
-    const input = e.inputBuffer.getChannelData(0)
-    const bufferData = new Float32Array(bufferSize)
-    for (let i = 0; i < bufferSize; i++) {
-      bufferData[i] = input[i]
-    }
-    audioData.push(bufferData)
-  }
-  scriptProcessor.connect(audioContext.destination)
-
-  setTimeout(async function() {
-    stopAudio()
-    btn.textContent = 'uplading...'
-    await uploadAudio()
-    btn.textContent = 'thank you!!'
-    setTimeout(function() {
-      btn.innerHTML = btn.bkInnerHTML
-    }, 1500)
-  }, TIME_RECORDING)
+  await stopAudio()
+  show('uploading recorded data...')
+  const id = await uploadAudio()
+  show('please write your information on Google form')
+  await sleep(2)
+  document.location = URL_FORM + fix0(id, 8)
 }
 </script>
 </body>
-
 </html>
