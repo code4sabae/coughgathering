@@ -84,7 +84,6 @@ window.onload = async function() {
     { caption: 'Cough continuously', sec: 20, record: true },
   ]
   await startAudio()
-  /*
   for (let j = 0; j < data.length; j++) {
     const d = data[j]
     if (d.record) {
@@ -104,8 +103,6 @@ window.onload = async function() {
     }
     await sleep(1)
   }
-  */
-  await sleep(1)
   await stopAudio()
   show('uploading recorded data...')
   const id = await uploadAudio()
