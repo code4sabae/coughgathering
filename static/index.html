@@ -41,15 +41,9 @@ window.onload = async function() {
   await startAudio()
   for (let j = 0; j < data.length; j++) {
     const d = data[j]
-    if (d.record) {
-      console.log('rec')
-    }
     for (let i = d.sec; i >= 0; i--) {
       show(`${d.caption} for ${d.sec} seconds<br>${i}`)
       await sleep(1)
-    }
-    if (d.record) {
-      console.log('rec stop')
     }
     if (j < data.length - 1) {
       show('Good!')
