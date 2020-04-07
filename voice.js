@@ -70,19 +70,18 @@ app.get(SECPATH + '*', (req, res) => {
   }
   if (fn.length == 0) {
     const s = []
-    for (let i = 0; i < 2; i++) {
-      s.push(`<h2>COVID-19 ${i}</h2>`)
-      try {
-        const list = fs.readdirSync('data/' + i)
-        console.log(list)
-        for (const f of list) {
-          const f2 = i + '/' + f
-          s.push(`<a href=${f2}>${f2}</a>`)
-        }
-      } catch (e) {
+    s.push(`<h2>COVID-19</h2>`)
+    try {
+      const list = fs.readdirSync('data/')
+      console.log(list)
+      for (const f of list) {
+        if (f.endsWith('.wav'))
+          s.push(`<a href=${f}>${f}</a>`)
       }
-      s.push('')
+    } catch (e) {
     }
+    s.push('')
+
     res.header('Content-Type', 'text/html; charset=utf-8')
     res.send(s.join('<br>'))
   } else {
