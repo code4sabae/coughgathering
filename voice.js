@@ -95,6 +95,8 @@ app.get('/*', (req, res) => {
     ctype = 'text/html; charset=utf-8'
   } else if (url.endsWith('.js')) {
     ctype = 'text/javascript'
+  } else if (url.endsWith('.css')) {
+    ctype = 'text/css'
   }
   let data = null
   try {

@@ -87,11 +87,8 @@ const uploadAudio = async function() {
   for (;;) {
     try {
       const url = '/'
-      //const url = 'http://cough.sabae.cc/'
       const formdata = new FormData()
       formdata.append("file", audioBlob)
-      //formdata.append('covid19', covid19.checked ? 1 : 0)
-      formdata.append('covid19', 0)
       const res = await (await fetch(url, { method: 'POST', body: formdata })).json()
       console.log(res)
       if (res.res == 'ok') {
