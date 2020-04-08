@@ -9,15 +9,15 @@
 
 <div id='contents'>
 <div class=header>
-<h1>COVID-19 Early Detection</h1>
-<div class=subtitle>Please take a few minutes to send us your cough sounds to help beat Coronavirus!</div>
+<h1>Virufy COVID-19</h1>
+<div class=subtitle>Please take a few minutes to send us your cough sounds to help verify Coronavirus!</div>
 </div>
-<button id="btn">Start recording...</button>
+<button id="btn">Click to start recording</button>
 <div class=desc>
-  Please place your smartphone near your mouth.
+  Please keep your smartphone near your mouth!
 </div>
 <div class=footer>
-  CODE: <a href=https://github.com/code4sabae/coughgathering/>GitHub</a> / APP: <a href=https://cough.sabae.cc/>Virufy COVID-19 Early Detection</a> CC BY <a href=https://twitter.com/taisukef>@taisukef</a> / <a href=https://www.zenit.jp/team>Amil Khanzada</a>
+  CODE: <a href=https://github.com/code4sabae/coughgathering/>GitHub</a> / APP: <a href=https://cough.sabae.cc/>Virufy COVID-19 Early Detection</a> / CC BY <a href=https://twitter.com/taisukef>@taisukef</a> / <a href=https://www.zenit.jp/team>Amil Khanzada</a>
 </div>
 </div>
 
@@ -35,14 +35,14 @@ window.onload = async function() {
   const data = [
     { caption: 'Breathe naturally', sec: 30, record: true },
     { caption: 'Cough continuously', sec: 20, record: true },
-    { caption: 'Take a break', sec: 30, record: false },
+    { caption: 'Breathe naturally', sec: 30, record: true },
     { caption: 'Cough continuously', sec: 20, record: true },
   ]
   await startAudio()
   for (let j = 0; j < data.length; j++) {
     const d = data[j]
     for (let i = d.sec; i >= 0; i--) {
-      show(`${d.caption} for ${d.sec} seconds<br>${i}`)
+      show(`${d.caption} for ${i} seconds`)
       await sleep(1)
     }
     if (j < data.length - 1) {
@@ -55,7 +55,7 @@ window.onload = async function() {
   await stopAudio()
   show('uploading recorded data...')
   const id = await uploadAudio()
-  show('please write your information on Google form')
+  show('Please fill in the following form')
   await sleep(2)
   document.location = URL_FORM + fix0(id, 8)
 }

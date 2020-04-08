@@ -3,30 +3,34 @@ body {
   font-family: sans-serif;
   margin: 0;
   padding: 0;
+  background-color: beige;
 }
 .header {
-  background-color: gray;
+  background-color: darkcyan;
   color: white;
 }
 h1 {
   margin: 0;
-  padding: 1em 0 .5em 0;
+  padding: 1em 0 0 0;
 }
 .subtitle {
+  padding-top: 0;
   padding: 1em;
 }
 .desc {
   margin: 1em;
+  font-size: 125%;
 }
 button {
-  background-color: hsl(0, 100%, 60%);
-  border-color: hsl(0, 100%, 60%);
+  background-color: darkturquoise;
+  border-color: darkturquoise;
   color: white;
   font-weight: bold;
-  font-size: 110%;
+  font-size: 100%;
   width: 15em;
   height: 15em;
   border-radius: 7.5em;
+  border-style: solid;
   margin: 2em;
 }
 .footer {
