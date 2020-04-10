@@ -24,7 +24,7 @@
 
 <script src='virufy.js'></script>
 <script>'use strict'
-const URL_FORM = 'https://docs.google.com/forms/d/e/1FAIpQLSeSspXKpv1fcEGcQhyPbZAXjBFF3b_8dVICbQDY1VGiNHLCIQ/viewform'
+const URL_FORM = 'https://docs.google.com/forms/d/e/1FAIpQLSeSspXKpv1fcEGcQhyPbZAXjBFF3b_8dVICbQDY1VGiNHLCIQ/viewform?entry.287747128='
 
 window.onload = async function() {
   await waitButtonPressed()
@@ -56,7 +56,7 @@ window.onload = async function() {
   const id = await uploadAudio()
   show('Please fill in the following form')
   await sleep(2)
-  document.location = URL_FORM
+  document.location = URL_FORM + fix0(id, 8)
 }
 </script>
 </body>
