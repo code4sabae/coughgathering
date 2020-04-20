@@ -43,19 +43,23 @@ const getID = function() {
 app.post('/', multer({ dest: 'tmp/' }).single('file'), (req, res) => {
   res.header('Access-Control-Allow-Origin', '*')
   res.header('Content-Type', 'application/json; charset=utf-8')
-  const data = fs.readFileSync(req.file.path)
-  console.log(req.file.path)
-  console.log(req)
-  let fn = req.body.filename
-  fn = fn.replace(/\.\./g, "__")
-  //const fn = 'data/' + id + "-" + util.getYMDHMSM() + "-" + encodeIP(getIP(req)) + ".wav"
-  util.writeFileSync('data/' + fn, data)
-  console.log('uploaded: ' + 'data/' + fn)
+  try {
+      const data = fs.readFileSync(req.file.path)
+    //console.log(req.file.path)
+    //console.log(req)
+    let fn = req.body.filename
+    fn = fn.replace(/\.\./g, "__")
+    //const fn = 'data/' + id + "-" + util.getYMDHMSM() + "-" + encodeIP(getIP(req)) + ".wav"
+    util.writeFileSync('data/' + fn, data)
+    console.log('uploaded: ' + 'data/' + fn)
 
-  const id = getID()
-  res.send(JSON.stringify({ res: 'ok', id: id }))
+    const id = getID()
+    res.send(JSON.stringify({ res: 'ok', id: id }))
 
-  fs.appendFileSync('data/log.txt', util.getYMDHMSM() + "," + id + "," + getIP(req) + "," + fn + "\n", "utf-8")
+    fs.appendFileSync('data/log.txt', util.getYMDHMSM() + "," + id + "," + getIP(req) + "," + fn + "\n", "utf-8")
+  } catch (e) {
+    res.send(JSON.stringify({ res: 'err' }))
+  }
 })
 app.get(SECPATH + '*', (req, res) => {
   let fn = req.url.substring(SECPATH.length)
