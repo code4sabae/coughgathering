@@ -12,6 +12,12 @@
 <h1>Virufy COVID-19</h1>
 <div class=subtitle>Please take a few minutes to send us your cough sounds to help verify Coronavirus!</div>
 </div>
+<br>
+<h3>Please enter your Patient ID:</h3>
+<form>
+  <input type="text" id="patient_id" name="patient_id"><br>
+  <input type="submit" value="Submit">
+</form>
 <button id="btn">Click to start recording</button>
 <div class=desc>
   Please see the instructions below!
@@ -32,10 +38,8 @@ window.onload = async function() {
   await sleep(1.5)
 
   const data = [
-    { caption: 'Please breathe in and out from your mouth as deeply as you can five times', sec: 30, record: true },
-    { caption: 'Cough continuously', sec: 20, record: true },
-    { caption: 'Take a break', sec: 30, record: true },
-    { caption: 'Cough continuously', sec: 20, record: true },
+    { caption: 'Please breathe in and out from your mouth as deeply as you can', sec: 10, record: true },
+    { caption: 'Cough continuously', sec: 20, record: true }
   ]
   await startAudio()
   for (let j = 0; j < data.length; j++) {
@@ -52,11 +56,9 @@ window.onload = async function() {
     await sleep(1)
   }
   await stopAudio()
-  show('uploading recorded data...')
+  show('uploading recorded audio data...')
   const id = await uploadAudio()
-  show('Please fill in the following form')
-  await sleep(2)
-  document.location = URL_FORM + fix0(id, 8)
+  show('Thank you!')
 }
 </script>
 </body>
