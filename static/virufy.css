@@ -13,6 +13,9 @@ h1 {
   margin: 0;
   padding: 1em 0 0 0;
 }
+h1 a {
+  color: white !important;
+}
 .subtitle {
   padding-top: 0;
   padding: 1em;
