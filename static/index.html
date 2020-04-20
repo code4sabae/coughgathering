@@ -16,7 +16,6 @@
 <h3>Please enter your Patient ID:</h3>
 <form>
   <input type="text" id="patient_id" name="patient_id"><br>
-  <input type="submit" value="Submit">
 </form>
 <button id="btn">Click to start recording</button>
 <div class=desc>
@@ -28,37 +27,55 @@
 </div>
 </div>
 
-<script src='virufy.js'></script>
-<script>'use strict'
-const URL_FORM = 'https://docs.google.com/forms/d/e/1FAIpQLSeSspXKpv1fcEGcQhyPbZAXjBFF3b_8dVICbQDY1VGiNHLCIQ/viewform?entry.287747128='
+<script type='module'>
+
+import virufy from './virufy.mjs'
 
 window.onload = async function() {
-  await waitButtonPressed()
-  show("Let's start to record!")
-  await sleep(1.5)
+  let pid = ""
+  for (;;) {
+    await virufy.waitButtonPressed()
+    pid = patient_id.value.trim()
+    if (pid.length > 0) {
+      break
+    }
+    alert('Please enter your Patient ID before.')
+  }
+  patient_id.disabled = true
+  virufy.show("Let's start to record!")
+  await virufy.sleep(1.5)
 
   const data = [
-    { caption: 'Please breathe in and out from your mouth as deeply as you can', sec: 10, record: true },
-    { caption: 'Cough continuously', sec: 20, record: true }
+    { caption: 'Please breathe in and out from your mouth as deeply as you can', sec: 10, record: true, filename: 'breath' },
+    { caption: 'Cough continuously', sec: 20, record: true, filename: 'cough' }
   ]
-  await startAudio()
+  const files = []
   for (let j = 0; j < data.length; j++) {
     const d = data[j]
+    if (d.record) {
+      await virufy.startAudio()
+    }
     for (let i = d.sec; i >= 0; i--) {
-      show(`${d.caption} for ${i} seconds`)
-      await sleep(1)
+      virufy.show(`${d.caption} for ${i} seconds`)
+      await virufy.sleep(1)
     }
     if (j < data.length - 1) {
-      show('Good!')
+      virufy.show('Good!')
     } else {
-      show('Thank you!')
+      virufy.show('Thank you!')
     }
-    await sleep(1)
+    if (d.record) {
+      const data = await virufy.stopAudio()
+      files.push({ data: data, filename: d.filename })
+    }
+    await virufy.sleep(1)
   }
-  await stopAudio()
-  show('uploading recorded audio data...')
-  const id = await uploadAudio()
-  show('Thank you!')
+  virufy.show('uploading recorded audio data...')
+  for (const d of files) {
+    const fn = virufy.fix0(pid, 6) + "-" + d.filename + ".wav"
+    await virufy.uploadAudio(d.data, fn)
+  }
+  virufy.show('Thank you!')
 }
 </script>
 </body>

@@ -1,7 +1,5 @@
 // CC BY @taisukef https://fukuno.jig.jp/
 
-'use strict'
-
 // audio
 
 let audioContext = null
@@ -12,6 +10,25 @@ const audioData = []
 const bufferSize = 1024
 let audio_sample_rate = 0
 
+const startAudio = async function() {
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+  audioStream = stream
+  window.AudioContext = window.webkitAudioContext || window.AudioContext
+  audioContext = new AudioContext()
+  audio_sample_rate = audioContext.sampleRate // 44100 on Mac
+  const scriptProcessor = audioContext.createScriptProcessor(bufferSize, 1, 1)
+  const mediastreamsource = audioContext.createMediaStreamSource(stream)
+  mediastreamsource.connect(scriptProcessor)
+  scriptProcessor.onaudioprocess = function(e) {
+    const input = e.inputBuffer.getChannelData(0)
+    const bufferData = new Float32Array(bufferSize)
+    for (let i = 0; i < bufferSize; i++) {
+      bufferData[i] = input[i]
+    }
+    audioData.push(bufferData)
+  }
+  scriptProcessor.connect(audioContext.destination)
+}
 const stopAudio = async function() {
   if (!audioContext)
     return
@@ -19,7 +36,8 @@ const stopAudio = async function() {
   audioContext = null
   audioStream.getTracks().forEach(t => t.stop())
   audioStream = null
-  btn.innerHTML = btn.bkInnerHTML
+  const audioBlob = getBlobWAV()
+  return audioBlob
 }
 const saveAudio = async function() {
   download.href = exportWAV()
@@ -79,16 +97,14 @@ const getBlobWAV = function() {
   return audioBlob
 }
 
-const uploadAudio = async function() {
-  const audioBlob = getBlobWAV()
-  const myURL = window.URL || window.webkitURL
-  const url = myURL.createObjectURL(audioBlob)
-
+const uploadAudio = async function(audioBlob, filename) {
   for (;;) {
     try {
       const url = '/'
       const formdata = new FormData()
       formdata.append("file", audioBlob)
+      if (filename)
+        formdata.append("filename", filename)
       const res = await (await fetch(url, { method: 'POST', body: formdata })).json()
       console.log(res)
       if (res.res == 'ok') {
@@ -99,25 +115,6 @@ const uploadAudio = async function() {
       alert("upload error, retry? (" + e + ") tap to retry")
     }
   }
-}
-const startAudio = async function() {
-  const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-  audioStream = stream
-  window.AudioContext = window.webkitAudioContext || window.AudioContext
-  audioContext = new AudioContext()
-  audio_sample_rate = audioContext.sampleRate // 44100 on Mac
-  const scriptProcessor = audioContext.createScriptProcessor(bufferSize, 1, 1)
-  const mediastreamsource = audioContext.createMediaStreamSource(stream)
-  mediastreamsource.connect(scriptProcessor)
-  scriptProcessor.onaudioprocess = function(e) {
-    const input = e.inputBuffer.getChannelData(0)
-    const bufferData = new Float32Array(bufferSize)
-    for (let i = 0; i < bufferSize; i++) {
-      bufferData[i] = input[i]
-    }
-    audioData.push(bufferData)
-  }
-  scriptProcessor.connect(audioContext.destination)
 }
 // util
 const sleep = async sec => new Promise(resolve => setTimeout(resolve, sec * 1000))
@@ -137,3 +134,5 @@ const fix0 = function(s, len) {
   s = "0000000000000000000" + s
   return s.substring(s.length - len)
 }
+
+export default { show, waitButtonPressed, sleep, fix0, startAudio, stopAudio, uploadAudio }
