@@ -6,11 +6,12 @@ let audioContext = null
 let audioStream = null
 
 // audio data
-const audioData = []
+let audioData = []
 const bufferSize = 1024
 let audio_sample_rate = 0
 
 const startAudio = async function() {
+  audioData = []
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
   audioStream = stream
   window.AudioContext = window.webkitAudioContext || window.AudioContext
