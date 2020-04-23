@@ -68,7 +68,8 @@ window.onload = async function() {
       const data = await virufy.stopAudio()
       files.push({ data: data, filename: d.filename })
     }
-    await virufy.sleep(1)
+    //await virufy.sleep(1)
+    alert("click OK")
   }
   virufy.show('uploading recorded audio data...')
   for (const d of files) {
