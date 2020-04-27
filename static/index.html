@@ -35,7 +35,7 @@ window.onload = async function() {
   let pid = ""
   for (;;) {
     await virufy.waitButtonPressed()
-    pid = patient_id.value.trim()
+    pid = patient_id.value.trim().replace(/[\s\.\/]/g, '_')
     if (pid.length > 0) {
       break
     }
